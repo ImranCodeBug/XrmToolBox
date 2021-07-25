@@ -464,7 +464,39 @@ namespace XrmToolBox.New
                     => p.Metadata.Name.ToLower().Contains(filter.ToString().ToLower())
                     || p.Metadata.Description.ToLower().Contains(filter.ToString().ToLower())
                     || p.Value.GetType().GetCompany().ToLower().Contains(filter.ToString().ToLower()))
-                : availablePlugins).OrderBy(p => p.Metadata.Name).ToList();
+                : availablePlugins).OrderBy(p => p.Metadata.Name).ToList();                       
+
+            SortPlugins(filteredPlugins, isc, top, lastWidth);
+
+            TryShowPlugins(filteredPlugins, categories);
+            
+            AdaptPluginControlSize();
+        }
+
+        private void TryShowPlugins(List<Lazy<IXrmToolBoxPlugin, IPluginMetadata>> filteredPlugins, List<string> categories) 
+        {
+            pnlPlugins.Controls.Clear();
+            var pluginsToDisplay = pluginsModels.Where(p => filteredPlugins.Contains((Lazy<IXrmToolBoxPlugin, IPluginMetadata>)p.Tag)).ToList();
+
+            foreach (PluginModel ctrl in pluginsToDisplay)
+            {
+                ctrl.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+                pnlPlugins.Controls.Add(ctrl);
+            }
+
+            if (!pluginsToDisplay.Any())
+            {
+                var filterCategory = categories.Count == 0 ? "" : $" in categor{(categories.Count > 1 ? "ies" : "y")} {string.Join(", ", categories)}";
+
+                lblPluginsNotFoundText.Text = string.Format(lblPluginsNotFoundText.Tag.ToString(), filterText, filterCategory);
+            }
+
+            pnlNoPluginFound.Visible = !pluginsToDisplay.Any();
+            pnlPlugins.Visible = pluginsToDisplay.Any();
+        }
+
+        private void SortPlugins(List<Lazy<IXrmToolBoxPlugin, IPluginMetadata>> filteredPlugins, ItSecurityChecker isc, int top, int lastWidth)
+        {
 
             if (Options.Instance.PluginsDisplayOrder == DisplayOrder.MostUsed)
             {
@@ -518,7 +550,7 @@ namespace XrmToolBox.New
             {
                 if (store == null)
                 {
-                    store = new StoreFromPortal(Options.Instance.ConnectionControlsAllowPreReleaseUpdates);                    
+                    store = new StoreFromPortal(Options.Instance.ConnectionControlsAllowPreReleaseUpdates);
                 }
 
                 if (store.XrmToolBoxPlugins == null)
@@ -529,10 +561,10 @@ namespace XrmToolBox.New
                 var storePlugins = store.XrmToolBoxPlugins.Plugins;
 
                 var filteredList = (from f in filteredPlugins
-                                   join s in storePlugins
-                                    on f.Metadata.Name equals s.Name
-                                   orderby s.AverageFeedbackRating descending
-                                   select f).ToList();
+                                    join s in storePlugins
+                                     on f.Metadata.Name equals s.Name
+                                    orderby s.AverageFeedbackRating descending
+                                    select f).ToList();
 
                 foreach (var plugin in filteredList.OrderBy(p => p.Metadata.Name))
                 {
@@ -554,35 +586,6 @@ namespace XrmToolBox.New
                     }
                 }
             }
-
-            Invoke(new Action(() =>
-            {
-                pnlPlugins.Controls.Clear();
-
-                var pluginsToDisplay = pluginsModels.Where(p => filteredPlugins.Contains((Lazy<IXrmToolBoxPlugin, IPluginMetadata>)p.Tag)).ToList();
-
-                foreach (PluginModel ctrl in pluginsToDisplay)
-                {
-                    ctrl.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-                    pnlPlugins.Controls.Add(ctrl);
-                }
-
-                if (!pluginsToDisplay.Any())
-                {
-                    var filterCategory = categories.Count == 0 ? "" : $" in categor{(categories.Count > 1 ? "ies" : "y")} {string.Join(", ", categories)}";
-
-                    lblPluginsNotFoundText.Text = string.Format(lblPluginsNotFoundText.Tag.ToString(), filterText, filterCategory);
-                    pnlNoPluginFound.Visible = true;
-                    pnlPlugins.Visible = false;
-                }
-                else
-                {
-                    pnlNoPluginFound.Visible = false;
-                    pnlPlugins.Visible = true;
-                }
-
-                AdaptPluginControlSize();
-            }));
         }
 
         private Image GetImage(string base64ImageContent, bool small = false)
