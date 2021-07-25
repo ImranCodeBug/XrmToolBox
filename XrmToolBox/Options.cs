@@ -335,7 +335,7 @@ namespace XrmToolBox
 
         [Category("Tools list display")]
         [DisplayName("New ribbon display duration")]
-        [Description("Number of days after having installed a tool a \"NEW\" ribbon is displayed on the tool")]
+        [Description("Number of days after having installed a tool \"NEW\" ribbon is displayed on the tool")]
         public int NumberOfDaysToShowNewRibbon { get; set; } = 7;
 
         [Browsable(false)]
